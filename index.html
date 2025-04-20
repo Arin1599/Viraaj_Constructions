@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cargo Expense Dashboard</title>
+  <!-- Chart.js for visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- XLSX for file parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* Base Styles */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f9fafc; margin: 0; padding: 2rem; }
+    .container { max-width: 1400px; margin: auto; background: #fff; border-radius: 20px; padding: 2rem; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #102a43; margin-bottom: 1rem; }
+    .input-group { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .input-group input[type="text"], .input-group button, input[type="file"] { padding: 0.5rem; border-radius: 8px; }
+    .input-group input[type="text"] { flex: 1; min-width: 200px; border: 1px solid #ccc; }
+    .input-group button, input[type="file"] { background: #334e68; color: #fff; border: none; cursor: pointer; }
+    .input-group button:hover, input[type="file"]:hover { background: #243b53; }
+    .summary { display: flex; justify-content: space-around; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .card { flex: 1; min-width: 250px; background: #f0f8ff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+    .card h3 { color: #1c3d5a; margin-bottom: 0.5rem; }
+    .charts { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; justify-content: center; }
+    .chart-container { flex: 1; min-width: 300px; max-width: 600px; background: #fff; padding: 1rem; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+    .table-wrapper { overflow-x: auto; margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { padding: 0.75rem; text-align: center; border: 1px solid #ccc; }
+    th { background: #334e68; color: white; }
+    td { background: #f9faf9; }
+    @media (max-width: 1024px) { .chart-container { min-width: 100%; } }
+    @media (max-width: 768px) { .summary { flex-direction: column; align-items: center; } .card, .chart-container { min-width: 100%; } th, td { padding: 0.5rem; font-size: 0.9rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Viraaj Constructions Dashboard</h1>
+    <div class="input-group">
+      <input type="text" id="sheetUrl" placeholder="Paste published CSV URL (output=csv)" />
+      <button id="loadUrlBtn">Load from Sheet</button>
+      <input type="file" id="fileInput" accept=".json,.csv,.xlsx,.xls" />
+    </div>
+    <div class="input-group">
+      <button onclick="loadFromButton('0203')">0203</button>
+      <button onclick="loadFromButton('3817')">3817</button>
+      <button onclick="loadFromButton('5619')">5619</button>
+      <button onclick="loadFromButton('8404')">8404</button>
+    </div>
+    <p style="text-align:center;font-size:0.9rem;color:#666;">To get a CSV URL: in Google Sheets, File → Publish to web → CSV, then copy the link.</p>
+    <div class="summary" id="summaryCards"></div>
+    <div class="charts">
+      <div class="chart-container"><canvas id="profitChart"></canvas></div>
+      <div class="chart-container"><canvas id="costVsRevenue"></canvas></div>
+    </div>
+    <div class="table-wrapper"><table id="dataTable"></table></div>
+  </div>
+
+  <script>
+    let chart1, chart2;
+    // Keep only rows where Date is not empty
+    function cleanData(rows) {
+      return rows.filter(row => row['Date'] && String(row['Date']).trim() !== '');
+    }
+    function cleanCurrency(v) { return parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0; }
+    function updateDashboard(data) {
+      const filtered = cleanData(data);
+      if (!filtered.length) return alert('No valid data found.');
+      renderTable(filtered);
+      renderSummary(filtered);
+      renderCharts(filtered);
+    }
+    function renderTable(data) {
+      const table = document.getElementById('dataTable'); table.innerHTML = '';
+      const headers = Object.keys(data[0]);
+      table.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>' +
+        data.map(row => '<tr>' + headers.map(h => `<td>${row[h] !== undefined ? row[h] : ''}</td>`).join('') + '</tr>').join('');
+    }
+    function renderSummary(data) {
+      let rev=0, cost=0, sav=0;
+      data.forEach(r => { rev += cleanCurrency(r['Sell price']); cost += cleanCurrency(r['Total cost']); sav += cleanCurrency(r['Savings']); });
+      document.getElementById('summaryCards').innerHTML =
+        `<div class="card"><h3>Total Revenue</h3><p>₹${rev.toLocaleString('en-IN')}</p></div>` +
+        `<div class="card"><h3>Total Cost</h3><p>₹${cost.toLocaleString('en-IN')}</p></div>` +
+        `<div class="card"><h3>Total Savings</h3><p>₹${sav.toLocaleString('en-IN')}</p></div>`;
+    }
+    function renderCharts(data) {
+      const labels = data.map(r => r['Date']);
+      const savings = data.map(r => cleanCurrency(r['Savings']));
+      const cost = data.map(r => cleanCurrency(r['Total cost']));
+      const revenue = data.map(r => cleanCurrency(r['Sell price']));
+      if (chart1) chart1.destroy(); if (chart2) chart2.destroy();
+      chart1 = new Chart(document.getElementById('profitChart'), { type: 'bar', data: { labels, datasets: [{ label: 'Savings', data: savings }] }, options: { responsive: true, plugins: { title: { display: true, text: 'Daily Savings' } } } });
+      chart2 = new Chart(document.getElementById('costVsRevenue'), { type: 'line', data: { labels, datasets: [{ label: 'Cost', data: cost }, { label: 'Revenue', data: revenue }] }, options: { responsive: true, plugins: { title: { display: true, text: 'Cost vs Revenue Over Time' } } } });
+    }
+    // Load published CSV via AllOrigins proxy
+    document.getElementById('loadUrlBtn').addEventListener('click', () => {
+      const url = document.getElementById('sheetUrl').value.trim(); if (!url) return alert('Please paste a valid CSV URL');
+      fetchAndLoadData(url);
+    });
+    function fetchAndLoadData(url) {
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url))
+        .then(res => res.text())
+        .then(txt => {
+          const wb = XLSX.read(txt, { type: 'string', raw: false, dateNF: 'DD-MM-YYYY' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(sheet, { raw: false, dateNF: 'DD-MM-YYYY' });
+          updateDashboard(data);
+        })
+        .catch(err => alert('Error loading sheet via proxy: ' + err));
+    }
+    function loadFromButton(code) {
+      const urls = {
+        '0203': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRryhpPxBoqDdZpjX31UmoiANEpxtDmLmUb59broaGCrkqA0WrT6dJki_eY5UZp7zyFI8aSJMZP9R7y/pub?gid=0&single=true&output=csv',
+        '3817': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyW6vjoDIt_DA-UcDgV5XVoghCDJvjbPxZe4z-g0CojQxr63To56tHBS9XQS3ltg/pub?gid=1299133194&single=true&output=csv',
+        '5619': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThLc7UfD0vodTOcRZNh12NYMsHxzm1dq2PNfGZ4suylcfPZQzMzcc2hDS4gXjTjw/pub?gid=1299133194&single=true&output=csv',
+        '8404': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRnnKhPijwa1KL2DKeIOku3fSImihiCubpZdDkCdYxwznix-42ADK6IlMvgAzRoLA9uyKIUxwUMfZA/pub?gid=0&single=true&output=csv'
+      };
+      const url = urls[code];
+      if (!url) return alert('URL for code ' + code + ' not available yet.');
+      fetchAndLoadData(url);
+    }
+    // Load from local file
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const reader = new FileReader();
+      reader.onload = evt => {
+        let data;
+        if (ext === 'json') data = JSON.parse(evt.target.result);
+        else {
+          const wb = XLSX.read(evt.target.result, { type: ext === 'csv' ? 'string' : 'binary', cellDates: true, dateNF: 'DD-MM-YYYY' });
+          data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: false, dateNF: 'DD-MM-YYYY' });
+        }
+        updateDashboard(data);
+      };
+      reader.readAsText(file);
+      if (['xlsx','xls'].includes(ext)) reader.readAsBinaryString(file);
+    });
+  </script>
+</body>
+</html>
