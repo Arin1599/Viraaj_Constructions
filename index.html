@@ -10,43 +10,211 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     /* Base Styles */
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f9fafc; margin: 0; padding: 2rem; }
-    .container { max-width: 1400px; margin: auto; background: #fff; border-radius: 20px; padding: 2rem; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #102a43; margin-bottom: 1rem; }
-    .input-group { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .input-group input[type="text"], .input-group button, input[type="file"] { padding: 0.5rem; border-radius: 8px; }
-    .input-group input[type="text"] { flex: 1; min-width: 200px; border: 1px solid #ccc; }
-    .input-group button, input[type="file"] { background: #334e68; color: #fff; border: none; cursor: pointer; }
-    .input-group button:hover, input[type="file"]:hover { background: #243b53; }
-    .summary { display: flex; justify-content: space-around; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .card { flex: 1; min-width: 250px; background: #f0f8ff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-    .card h3 { color: #1c3d5a; margin-bottom: 0.5rem; }
-    .charts { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; justify-content: center; }
-    .chart-container { flex: 1; min-width: 300px; max-width: 600px; background: #fff; padding: 1rem; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-    .table-wrapper { overflow-x: auto; margin-top: 2rem; }
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th, td { padding: 0.75rem; text-align: center; border: 1px solid #ccc; }
-    th { background: #334e68; color: white; }
-    td { background: #f9faf9; }
-    @media (max-width: 1024px) { .chart-container { min-width: 100%; } }
-    @media (max-width: 768px) { .summary { flex-direction: column; align-items: center; } .card, .chart-container { min-width: 100%; } th, td { padding: 0.5rem; font-size: 0.9rem; } }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: #f9fafc; 
+      margin: 0; 
+      padding: 2rem; 
+    }
+    
+    .container { 
+      max-width: 1400px; 
+      margin: auto; 
+      background: #fff; 
+      border-radius: 20px; 
+      padding: 2rem; 
+      box-shadow: 0 0 20px rgba(0,0,0,0.1); 
+    }
+    
+    h1 { 
+      text-align: center; 
+      color: #102a43; 
+      margin-bottom: 2rem;
+      font-size: 2.2rem;
+    }
+    
+    .project-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .project-button {
+      background: #334e68;
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .project-button:hover {
+      background: #243b53;
+      transform: translateY(-2px);
+    }
+    
+    .sheet-dropdown {
+      display: none;
+      position: absolute;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 0.5rem;
+      min-width: 200px;
+    }
+    
+    .sheet-dropdown select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      outline: none;
+      font-size: 0.95rem;
+      color: #334e68;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    
+    .sheet-dropdown select:hover,
+    .sheet-dropdown select:focus {
+      border-color: #334e68;
+    }
+    
+    .sheet-dropdown select option {
+      padding: 0.5rem;
+    }
+
+    /* Rest of the existing styles */
+    .summary { 
+      display: flex; 
+      justify-content: space-around; 
+      margin-top: 2rem; 
+      flex-wrap: wrap; 
+      gap: 1rem; 
+    }
+    
+    .card { 
+      flex: 1; 
+      min-width: 250px; 
+      background: #f0f8ff; 
+      border-radius: 12px; 
+      padding: 1.5rem; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .card h3 { 
+      color: #1c3d5a; 
+      margin-bottom: 0.8rem;
+      font-size: 1.3rem;
+    }
+    
+    .card p {
+      font-size: 1.4rem;
+      color: #334e68;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    .charts { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 2rem; 
+      margin-top: 3rem; 
+      justify-content: center; 
+    }
+    
+    .chart-container { 
+      flex: 1; 
+      min-width: 300px; 
+      max-width: 600px; 
+      background: #fff; 
+      padding: 1.5rem; 
+      border-radius: 12px; 
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    
+    .table-wrapper { 
+      overflow-x: auto; 
+      margin-top: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      min-width: 800px;
+    }
+    
+    th, td { 
+      padding: 1rem; 
+      text-align: center; 
+      border: 1px solid #e2e8f0;
+    }
+    
+    th { 
+      background: #334e68; 
+      color: white;
+      font-weight: 600;
+    }
+    
+    td { 
+      background: #fff;
+      color: #334e68;
+    }
+    
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    
+    @media (max-width: 1024px) { 
+      .chart-container { 
+        min-width: 100%; 
+      } 
+    }
+    
+    @media (max-width: 768px) { 
+      .summary { 
+        flex-direction: column; 
+        align-items: center; 
+      } 
+      .card, 
+      .chart-container { 
+        min-width: 100%; 
+      } 
+      th, td { 
+        padding: 0.75rem; 
+        font-size: 0.9rem; 
+      } 
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Viraaj Constructions Dashboard</h1>
-    <div class="input-group">
-      <input type="text" id="sheetUrl" placeholder="Paste published CSV URL (output=csv)" />
-      <button id="loadUrlBtn">Load from Sheet</button>
-      <input type="file" id="fileInput" accept=".json,.csv,.xlsx,.xls" />
+    <div class="project-buttons">
+      <button class="project-button" onclick="showSheetSelector('0203')">0203</button>
+      <button class="project-button" onclick="showSheetSelector('3817')">3817</button>
+      <button class="project-button" onclick="showSheetSelector('5619')">5619</button>
+      <button class="project-button" onclick="showSheetSelector('8404')">8404</button>
+      <div id="sheetDropdown" class="sheet-dropdown">
+        <select id="sheetSelect" onchange="loadSelectedSheet(this.value)">
+          <option value="">Select a sheet</option>
+        </select>
+      </div>
     </div>
-    <div class="input-group">
-      <button onclick="loadFromButton('0203')">0203</button>
-      <button onclick="loadFromButton('3817')">3817</button>
-      <button onclick="loadFromButton('5619')">5619</button>
-      <button onclick="loadFromButton('8404')">8404</button>
-    </div>
-    <p style="text-align:center;font-size:0.9rem;color:#666;">To get a CSV URL: in Google Sheets, File → Publish to web → CSV, then copy the link.</p>
     <div class="summary" id="summaryCards"></div>
     <div class="charts">
       <div class="chart-container"><canvas id="profitChart"></canvas></div>
@@ -57,11 +225,264 @@
 
   <script>
     let chart1, chart2;
-    // Keep only rows where Date is not empty
-    function cleanData(rows) {
-      return rows.filter(row => row['Date'] && String(row['Date']).trim() !== '');
+    let currentProjectId = null;
+
+    // Project URLs mapping
+    const PROJECT_URLS = {
+      '0203': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRryhpPxBoqDdZpjX31UmoiANEpxtDmLmUb59broaGCrkqA0WrT6dJki_eY5UZp7zyFI8aSJMZP9R7y/pub?output=xlsx',
+      '3817': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyW6vjoDIt_DA-UcDgV5XVoghCDJvjbPxZe4z-g0CojQxr63To56tHBS9XQS3ltg/pub?output=xlsx',
+      '5619': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThLc7UfD0vodTOcRZNh12NYMsHxzm1dq2PNfGZ4suylcfPZQzMzcc2hDS4gXjTjw/pub?output=xlsx',
+      '8404': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRnnKhPijwa1KL2DKeIOku3fSImihiCubpZdDkCdYxwznix-42ADK6IlMvgAzRoLA9uyKIUxwUMfZA/pub?output=xlsx'
+    };
+
+    async function showSheetSelector(projectId) {
+      currentProjectId = projectId;
+      const dropdown = document.getElementById('sheetDropdown');
+      
+      // Position the dropdown under the clicked button
+      const button = event.target;
+      const buttonRect = button.getBoundingClientRect();
+      dropdown.style.position = 'absolute';
+      dropdown.style.left = `${buttonRect.left}px`;
+      dropdown.style.top = `${buttonRect.bottom}px`;
+
+      if (dropdown.style.display === 'none' || !dropdown.style.display) {
+        await fetchSheetNames(projectId);
+        dropdown.style.display = 'block';
+      } else {
+        dropdown.style.display = 'none';
+      }
     }
-    function cleanCurrency(v) { return parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0; }
+
+    async function fetchSheetNames(projectId) {
+      try {
+        const url = PROJECT_URLS[projectId];
+        if (!url) {
+          alert('Project URL not found');
+          return;
+        }
+
+        // Fetch the XLSX file using AllOrigins proxy
+        const response = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Read the XLSX file
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Get all sheet names
+        const sheetNames = workbook.SheetNames;
+        
+        const select = document.getElementById('sheetSelect');
+        select.innerHTML = '<option value="">Select a sheet</option>';
+        
+        // Add all sheet names to the dropdown
+        sheetNames.forEach((sheetName, index) => {
+          const option = document.createElement('option');
+          option.value = sheetName;
+          option.textContent = sheetName;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Error loading sheets:', err);
+        alert('Error loading sheet names: ' + err.message);
+      }
+    }
+
+    async function loadSelectedSheet(sheetName) {
+      if (!sheetName || !currentProjectId) return;
+      
+      try {
+        const url = PROJECT_URLS[currentProjectId];
+        
+        // Fetch the XLSX file
+        const response = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Read the XLSX file and get the selected sheet
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Convert sheet data to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+          raw: false,
+          dateNF: 'DD-MM-YYYY'
+        });
+        
+        if (!jsonData || jsonData.length === 0) {
+          throw new Error('No data found in selected sheet');
+        }
+        
+        updateDashboard(jsonData);
+        document.getElementById('sheetDropdown').style.display = 'none';
+      } catch (err) {
+        console.error('Error loading sheet:', err);
+        alert('Error loading sheet: ' + err.message);
+      }
+    }
+
+    function cleanData(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        console.log('No rows provided to cleanData');
+        return [];
+      }
+      
+      // Log the initial data structure
+      console.log('First row before cleaning:', rows[0]);
+      
+      const cleaned = rows.filter(row => {
+        // Check if row is not empty and has a Date
+        const hasDate = row && 
+                       typeof row === 'object' && 
+                       (row['Date'] || row['date'] || row['DATE']) && 
+                       String(row['Date'] || row['date'] || row['DATE']).trim() !== '';
+                       
+        if (!hasDate) {
+          console.log('Row filtered out due to missing date:', row);
+        }
+        return hasDate;
+      }).map(row => {
+        // Ensure all required fields exist with proper formatting
+        const cleanedRow = { ...row };
+        
+        // Handle case-insensitive field names
+        const dateField = row['Date'] || row['date'] || row['DATE'];
+        const costField = row['Total cost'] || row['total cost'] || row['TOTAL COST'];
+        const sellField = row['Sell price'] || row['sell price'] || row['SELL PRICE'];
+        const savingsField = row['Savings'] || row['savings'] || row['SAVINGS'];
+        
+        // Normalize field names
+        cleanedRow['Date'] = dateField;
+        cleanedRow['Total cost'] = costField;
+        cleanedRow['Sell price'] = sellField;
+        cleanedRow['Savings'] = savingsField;
+        
+        // Parse and format date
+        const dateParts = String(dateField).split(/[-\/]/);
+        if (dateParts.length === 3) {
+          // Assuming DD-MM-YYYY format
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2].length === 2 ? '20' + dateParts[2] : dateParts[2];
+          cleanedRow['Date'] = `${day}-${month}-${year}`;
+        }
+        
+        // Clean numeric fields
+        ['Total cost', 'Sell price', 'Savings'].forEach(field => {
+          if (cleanedRow[field]) {
+            const value = String(cleanedRow[field]).replace(/[₹,]/g, '').trim();
+            cleanedRow[field] = value ? parseFloat(value).toFixed(2) : '0.00';
+          } else {
+            cleanedRow[field] = '0.00';
+          }
+        });
+        
+        return cleanedRow;
+      });
+      
+      // Log the cleaned data
+      if (cleaned.length > 0) {
+        console.log('First row after cleaning:', cleaned[0]);
+      } else {
+        console.log('No rows survived cleaning process');
+      }
+      
+      return cleaned;
+    }
+
+    function parseCSV(text) {
+      if (!text || typeof text !== 'string') {
+        console.log('Invalid input to parseCSV');
+        return [];
+      }
+      
+      // Split into lines and remove empty lines
+      const lines = text.split('\n').filter(line => line.trim());
+      if (lines.length === 0) {
+        console.log('No valid lines found in CSV');
+        return [];
+      }
+
+      // Log the first line to check headers
+      console.log('CSV Headers:', lines[0]);
+
+      function parseCSVLine(line) {
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            if (insideQuotes && line[i + 1] === '"') {
+              // Handle escaped quotes
+              currentValue += '"';
+              i++;
+            } else {
+              // Toggle quote state
+              insideQuotes = !insideQuotes;
+            }
+          } else if (char === ',' && !insideQuotes) {
+            // End of field
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        
+        // Push the last value
+        values.push(currentValue.trim());
+        return values;
+      }
+
+      // Get and clean headers
+      const headers = parseCSVLine(lines[0]).map(h => h.replace(/^[\s"]+|[\s"]+$/g, ''));
+      const rows = [];
+      
+      // Process each data line
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        if (values.length !== headers.length) {
+          console.log(`Skipping malformed line ${i + 1}:`, lines[i]);
+          continue;
+        }
+        
+        const row = {};
+        headers.forEach((header, index) => {
+          let value = values[index] || '';
+          // Remove surrounding quotes if present
+          value = value.replace(/^[\s"]+|[\s"]+$/g, '');
+          
+          // Try to convert numeric values
+          if (value !== '' && !isNaN(value.replace(/[₹,]/g, ''))) {
+            value = value.replace(/[₹,]/g, '');
+          }
+          
+          row[header] = value;
+        });
+        
+        rows.push(row);
+      }
+      
+      // Log parsing results
+      console.log(`Parsed ${rows.length} rows from CSV`);
+      if (rows.length > 0) {
+        console.log('Sample row:', rows[0]);
+      }
+      
+      return rows;
+    }
+
+    function cleanCurrency(v) {
+      if (!v) return 0;
+      // Handle currency symbols, commas, and spaces
+      const cleaned = String(v).replace(/[₹,\s]/g, '');
+      return parseFloat(cleaned) || 0;
+    }
+    
     function updateDashboard(data) {
       const filtered = cleanData(data);
       if (!filtered.length) return alert('No valid data found.');
@@ -107,17 +528,6 @@
           updateDashboard(data);
         })
         .catch(err => alert('Error loading sheet via proxy: ' + err));
-    }
-    function loadFromButton(code) {
-      const urls = {
-        '0203': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRryhpPxBoqDdZpjX31UmoiANEpxtDmLmUb59broaGCrkqA0WrT6dJki_eY5UZp7zyFI8aSJMZP9R7y/pub?gid=0&single=true&output=csv',
-        '3817': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyW6vjoDIt_DA-UcDgV5XVoghCDJvjbPxZe4z-g0CojQxr63To56tHBS9XQS3ltg/pub?gid=1299133194&single=true&output=csv',
-        '5619': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vThLc7UfD0vodTOcRZNh12NYMsHxzm1dq2PNfGZ4suylcfPZQzMzcc2hDS4gXjTjw/pub?gid=1299133194&single=true&output=csv',
-        '8404': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRnnKhPijwa1KL2DKeIOku3fSImihiCubpZdDkCdYxwznix-42ADK6IlMvgAzRoLA9uyKIUxwUMfZA/pub?gid=0&single=true&output=csv'
-      };
-      const url = urls[code];
-      if (!url) return alert('URL for code ' + code + ' not available yet.');
-      fetchAndLoadData(url);
     }
     // Load from local file
     document.getElementById('fileInput').addEventListener('change', function(e) {
